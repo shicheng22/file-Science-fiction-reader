@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#060a10">
 <title>档案终端</title>
 <style>
@@ -527,6 +527,9 @@ body.light-mode .email-item{background:rgba(255,255,255,.7)}
   color:var(--text);line-height:1.6;white-space:pre-wrap;word-break:break-word}
 .dev-info{font-family:var(--mono);font-size:11px;color:var(--dim);line-height:1.7}
 .dev-info b{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
 </style>
 </head>
 <body>
@@ -2140,7 +2143,7 @@ function executeTrigger(t, type, record){
           if(!text) return;
           const echo = $('#dlgEcho');
           if(!echo) return;
-          echo.innerHTML += `<div style="color:var(--accent);margin-bottom:6px">> 你：${esc(text)}</div>`;
+          echo.insertAdjacentHTML('beforeend', `<div style="color:var(--accent);margin-bottom:6px">> 你：${esc(text)}</div>`);
           const rule = rules.find(r=>r.key === text);
           let reply = '';
           if(rule) reply = rule.value;
@@ -2149,7 +2152,7 @@ function executeTrigger(t, type, record){
             setTimeout(()=>{
               const box = $('#dlgEcho');
               if(!box) return;
-              box.innerHTML += `<div style="color:var(--text);margin-bottom:6px">> ${esc(reply)}</div>`;
+              box.insertAdjacentHTML('beforeend', `<div style="color:var(--text);margin-bottom:6px">> ${esc(reply)}</div>`);
               playSound('notify');
             }, 300);
           }
@@ -4591,7 +4594,7 @@ function showDialog(title, content){
   modalCfg = { title:title||'提示', fields:[], okText:'确定', onSubmit:()=>true };
   $('#modalTitle').textContent = title || '提示';
   $('#modalOk').textContent = '确定';
-  $('#modalFields').innerHTML = `<div class="hint" style="white-space:pre-wrap;color:var(--text);padding:10px 0">${content||''}</div>`;
+  $('#modalFields').innerHTML = `<div class="hint" style="white-space:pre-wrap;color:var(--text);padding:10px 0">${esc(content||'')}</div>`;
   show('#modal');
 }
 
@@ -5439,6 +5442,7 @@ function sendSystemNotification(title, body){
 }
 
 function tickStability(){
+  if(document.hidden) return;
   if(DB.stabilityRecovery && DB.stabilityRecovery.active){
     if(stabilityLive < 80){
       stabilityLive = Math.min(80, stabilityLive + 1);
@@ -5476,8 +5480,9 @@ function tickStability(){
   stabilityTickCount++;
   if(stateChanged || stabilityTickCount >= 10){
     stabilityTickCount = 0;
+    const stabChanged = Math.round(DB.stability) !== Math.round(stabilityLive);
     DB.stability = stabilityLive;
-    saveDB();
+    if(stateChanged || stabChanged) saveDB();
     if(stateChanged) renderTop();
   }
 }
